@@ -17,7 +17,7 @@ from starlette.responses import JSONResponse
 from .config import ENV_VERSION, VALUE_UNKNOWN, ENV_MONGODB_URL, VALUE_DEFAULT_DB_NAME
 
 from .model import IdeaUpdate, IdeaRead, Root, ErrorResponseMessage, convert_doc_value, IdeaList, \
-    convert_doc_values, TagRead, TagList
+    convert_doc_values, ContextRead, ContextList
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +43,16 @@ def read_root(request: Request) -> Root:
 
 
 @app.get("/tags")
-def read_tags() -> TagList:
+def read_tags() -> ContextList:
     pipeline = [
         {"$unwind": "$tags"},
         {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
-
     tags = []
     for f in found:
-        tags.append(TagRead(**convert_doc_value(f)))
-    return TagList(data=tags)
+        tags.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=tags)
 
 
 @app.get("/tags/{tag_name}")
@@ -66,23 +65,51 @@ def get_idea_by_tag(tag_name: str) -> IdeaList:
 
 
 @app.get("/projects")
-def read_projects(q: str | None = None) -> list[str]:
-    return []
+def read_projects() -> ContextList:
+    pipeline = [
+        {"$group": {"_id": "$project", "count": {"$sum": 1}}},
+    ]
+    found = db['ideas'].aggregate(pipeline)
+    tags = []
+    for f in found:
+        tags.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=tags)
 
 
 @app.get("/areas")
-def read_areas(q: str | None = None) -> list[str]:
-    return []
+def read_areas() -> ContextList:
+    pipeline = [
+        {"$group": {"_id": "$area", "count": {"$sum": 1}}},
+    ]
+    found = db['ideas'].aggregate(pipeline)
+    tags = []
+    for f in found:
+        tags.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=tags)
 
 
 @app.get("/resources")
-def read_resources(q: str | None = None) -> list[str]:
-    return []
+def read_resources() -> ContextList:
+    pipeline = [
+        {"$group": {"_id": "$resource", "count": {"$sum": 1}}},
+    ]
+    found = db['ideas'].aggregate(pipeline)
+    tags = []
+    for f in found:
+        tags.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=tags)
 
 
 @app.get("/archives")
-def read_archives(q: str | None = None) -> list[str]:
-    return []
+def read_archives() -> ContextList:
+    pipeline = [
+        {"$group": {"_id": "$archive", "count": {"$sum": 1}}},
+    ]
+    found = db['ideas'].aggregate(pipeline)
+    tags = []
+    for f in found:
+        tags.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=tags)
 
 
 @app.get("/ideas")

@@ -16,12 +16,12 @@ class ErrorResponseMessage(BaseModel):
     message: str
     detail: Union[str, None] = None
 
-class TagRead(BaseModel):
+class ContextRead(BaseModel):
     id: str
     count: Union[int, None] = None
 
-class TagList(BaseModel):
-    data: list[TagRead]
+class ContextList(BaseModel):
+    data: list[ContextRead]
 
 
 class IdeaUpdate(BaseModel):
