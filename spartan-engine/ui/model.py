@@ -16,11 +16,14 @@ class ErrorResponseMessage(BaseModel):
     message: str
     detail: Union[str, None] = None
 
+
 class ContextRead(BaseModel):
     id: str
     count: Union[int, None] = None
 
+
 class ContextList(BaseModel):
+    context: str
     data: list[ContextRead]
 
 

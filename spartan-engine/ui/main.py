@@ -52,7 +52,7 @@ def read_tags() -> ContextList:
     tags = []
     for f in found:
         tags.append(ContextRead(**convert_doc_value(f)))
-    return ContextList(data=tags)
+    return ContextList(data=tags, context='tag')
 
 
 @app.get("/tags/{tag_name}")
@@ -70,10 +70,10 @@ def read_projects() -> ContextList:
         {"$group": {"_id": "$project", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
-    tags = []
+    projects = []
     for f in found:
-        tags.append(ContextRead(**convert_doc_value(f)))
-    return ContextList(data=tags)
+        projects.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=projects, context='project')
 
 
 @app.get("/projects/{project_name}")
@@ -91,10 +91,10 @@ def read_areas() -> ContextList:
         {"$group": {"_id": "$area", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
-    tags = []
+    areas = []
     for f in found:
-        tags.append(ContextRead(**convert_doc_value(f)))
-    return ContextList(data=tags)
+        areas.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=areas, context='area')
 
 
 @app.get("/areas/{area_name}")
@@ -112,10 +112,10 @@ def read_resources() -> ContextList:
         {"$group": {"_id": "$resource", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
-    tags = []
+    resources = []
     for f in found:
-        tags.append(ContextRead(**convert_doc_value(f)))
-    return ContextList(data=tags)
+        resources.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=resources, context='resource')
 
 
 @app.get("/resources/{resource_name}")
@@ -133,10 +133,10 @@ def read_archives() -> ContextList:
         {"$group": {"_id": "$archive", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
-    tags = []
+    archives = []
     for f in found:
-        tags.append(ContextRead(**convert_doc_value(f)))
-    return ContextList(data=tags)
+        archives.append(ContextRead(**convert_doc_value(f)))
+    return ContextList(data=archives, context='archive')
 
 
 @app.get("/archives/{resource_name}")
