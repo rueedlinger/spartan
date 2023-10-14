@@ -56,7 +56,7 @@ def read_tags() -> ContextList:
 
 
 @app.get("/tags/{tag_name}")
-def get_idea_by_tag(tag_name: str) -> IdeaList:
+def get_ideas_by_tag(tag_name: str) -> IdeaList:
     found = db['ideas'].find({"tags": {"$in": [tag_name]}}).limit(1000)
     ideas = []
     for f in found:
@@ -76,6 +76,15 @@ def read_projects() -> ContextList:
     return ContextList(data=tags)
 
 
+@app.get("/projects/{project_name}")
+def get_ideas_by_project(project_name: str) -> IdeaList:
+    found = db['ideas'].find({"project": project_name}).limit(1000)
+    ideas = []
+    for f in found:
+        ideas.append(IdeaRead(**convert_doc_value(f)))
+    return IdeaList(data=ideas)
+
+
 @app.get("/areas")
 def read_areas() -> ContextList:
     pipeline = [
@@ -86,6 +95,15 @@ def read_areas() -> ContextList:
     for f in found:
         tags.append(ContextRead(**convert_doc_value(f)))
     return ContextList(data=tags)
+
+
+@app.get("/areas/{area_name}")
+def get_ideas_by_area(area_name: str) -> IdeaList:
+    found = db['ideas'].find({"area": area_name}).limit(1000)
+    ideas = []
+    for f in found:
+        ideas.append(IdeaRead(**convert_doc_value(f)))
+    return IdeaList(data=ideas)
 
 
 @app.get("/resources")
@@ -100,6 +118,15 @@ def read_resources() -> ContextList:
     return ContextList(data=tags)
 
 
+@app.get("/resources/{resource_name}")
+def get_ideas_by_resource(resource_name: str) -> IdeaList:
+    found = db['ideas'].find({"resource": resource_name}).limit(1000)
+    ideas = []
+    for f in found:
+        ideas.append(IdeaRead(**convert_doc_value(f)))
+    return IdeaList(data=ideas)
+
+
 @app.get("/archives")
 def read_archives() -> ContextList:
     pipeline = [
@@ -110,6 +137,15 @@ def read_archives() -> ContextList:
     for f in found:
         tags.append(ContextRead(**convert_doc_value(f)))
     return ContextList(data=tags)
+
+
+@app.get("/archives/{resource_name}")
+def get_ideas_by_archive(archive_name: str) -> IdeaList:
+    found = db['ideas'].find({"archive": archive_name}).limit(1000)
+    ideas = []
+    for f in found:
+        ideas.append(IdeaRead(**convert_doc_value(f)))
+    return IdeaList(data=ideas)
 
 
 @app.get("/ideas")
