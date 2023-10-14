@@ -65,8 +65,9 @@ class IdeaRead(BaseModel):
 
 
 class IdeaList(BaseModel):
-    query: Union[dict, None] = None
     data: list[IdeaRead]
+    query: Union[dict, None] = None
+    pagination: Union[dict, None] = None
 
 
 class Pagination(BaseModel):

@@ -2,7 +2,7 @@ import hashlib
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List
+from typing import List, Annotated
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -175,6 +175,10 @@ def get_ideas_by_archive(archive_name: str, exact_match: bool = True) -> IdeaLis
 
 @app.get("/ideas")
 def read_ideas(
+        offset: int = 0,
+        limit: int = 100,
+        sort_by: str | None = None,
+        sort_order: Annotated[str | None, Query(pattern="^asc$|^desc$")] = None,
         name: str | None = None,
         tags: List[str] = Query(None),
         project: str | None = None,
@@ -217,11 +221,22 @@ def read_ideas(
         query['modified_ts']["$gte"] = after_modified_ts
 
     logger.debug(f"query: {query}")
-    found = db['ideas'].find(query).limit(1000)
+
+    sorting_key = '_id'
+    sorting_order = -1
+    if sort_by is not None:
+        sorting_key = sort_by
+    if sort_order is not None:
+        if sort_order.lower() == 'asc':
+            sorting_order = 1
+        else:
+            sorting_order = -1
+
+    found = db['ideas'].find(query).sort(sorting_key, sorting_order).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas, query=query)
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
 
 
 @app.get("/ideas/{idea_id}", responses={
