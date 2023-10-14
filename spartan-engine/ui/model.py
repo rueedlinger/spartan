@@ -86,10 +86,3 @@ def convert_doc_value(doc):
         else:
             data[k] = v
     return data
-
-
-def convert_doc_values(docs):
-    data = {'data': []}
-    for doc in docs:
-        data['data'].append(convert_doc_value(doc))
-    return data

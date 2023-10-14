@@ -16,8 +16,8 @@ from starlette.responses import JSONResponse
 
 from .config import ENV_VERSION, VALUE_UNKNOWN, ENV_MONGODB_URL, VALUE_DEFAULT_DB_NAME
 
-from .model import IdeaUpdate, IdeaRead, Root, ErrorResponseMessage, convert_doc_value, IdeaList, \
-    convert_doc_values, ContextRead, ContextList
+from .model import IdeaUpdate, IdeaRead, Root, ErrorResponseMessage, convert_doc_value, IdeaList, ContextRead, \
+    ContextList
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,10 @@ app = FastAPI()
 
 @app.get("/")
 def read_root(request: Request) -> Root:
-    return Root(version=VALUE_UNKNOWN, docs=str(request.url) + "docs", redoc=str(request.url) + "redoc")
+    version = VALUE_UNKNOWN
+    if ENV_VERSION in os.environ:
+        version = os.environ[ENV_VERSION]
+    return Root(version=version, docs=str(request.url) + "docs", redoc=str(request.url) + "redoc")
 
 
 @app.get("/tags")
@@ -227,11 +230,6 @@ def update_idea(idea_id: str, idea: IdeaUpdate) -> IdeaRead:
             )
         )
         return JSONResponse(content=json, status_code=400)
-
-
-@app.patch("/ideas/{idea_id}")
-def patch_idea(idea_id: str, item: IdeaUpdate) -> IdeaRead:
-    return None
 
 
 @app.post("/ideas")
