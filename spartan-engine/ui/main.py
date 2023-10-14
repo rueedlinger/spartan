@@ -72,7 +72,8 @@ def get_ideas_by_tag(tag_name: str) -> IdeaList:
 @app.get("/projects")
 def read_projects() -> ContextList:
     pipeline = [
-        {"$group": {"_id": "$project", "count": {"$sum": 1}}},
+        {"$match": {"project": {"$ne": None}}},
+        {"$group": {"_id": "$project", "count": {"$sum": 1}}}
     ]
     found = db['ideas'].aggregate(pipeline)
     projects = []
@@ -97,6 +98,7 @@ def get_ideas_by_project(project_name: str, exact_match: bool = True) -> IdeaLis
 @app.get("/areas")
 def read_areas() -> ContextList:
     pipeline = [
+        {"$match": {"area": {"$ne": None}}},
         {"$group": {"_id": "$area", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
@@ -122,6 +124,7 @@ def get_ideas_by_area(area_name: str,  exact_match: bool = True) -> IdeaList:
 @app.get("/resources")
 def read_resources() -> ContextList:
     pipeline = [
+        {"$match": {"resource": {"$ne": None}}},
         {"$group": {"_id": "$resource", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
@@ -147,6 +150,7 @@ def get_ideas_by_resource(resource_name: str, exact_match: bool = True) -> IdeaL
 @app.get("/archives")
 def read_archives() -> ContextList:
     pipeline = [
+        {"$match": {"archive": {"$ne": None}}},
         {"$group": {"_id": "$archive", "count": {"$sum": 1}}},
     ]
     found = db['ideas'].aggregate(pipeline)
