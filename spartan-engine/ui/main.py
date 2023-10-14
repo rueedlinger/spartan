@@ -2,6 +2,7 @@ import hashlib
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import List
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -153,16 +154,53 @@ def get_ideas_by_archive(archive_name: str) -> IdeaList:
 
 @app.get("/ideas")
 def read_ideas(
-        tags: str | None = None,
+        name: str | None = None,
+        tags: List[str] = Query(None),
         project: str | None = None,
         area: str | None = None,
         resource: str | None = None,
-        archive: str | None = None) -> IdeaList:
-    found = db['ideas'].find().limit(1000)
+        archive: str | None = None,
+        before_created_ts: datetime | None = None,
+        after_created_ts: datetime | None = None,
+        before_modified_ts: datetime | None = None,
+        after_modified_ts: datetime | None = None) -> IdeaList:
+
+    query = {}
+    if name is not None:
+        query['name'] = name
+    if tags is not None:
+        query['tags'] = {"$in": tags}
+    if project is not None:
+        query['project'] = project
+    if area is not None:
+        query['area'] = area
+    if resource is not None:
+        query['resource'] = resource
+    if archive is not None:
+        query['archive'] = resource
+    if before_created_ts is not None:
+        if 'created_ts' not in query:
+            query['created_ts'] = {}
+        query['created_ts']["$lte"] = before_created_ts
+    if after_created_ts is not None:
+        if 'created_ts' not in query:
+            query['created_ts'] = {}
+        query['created_ts']["$gte"] = after_created_ts
+    if before_modified_ts is not None:
+        if 'modified_ts' not in query:
+            query['modified_ts'] = {}
+        query['modified_ts']["$lte"]= before_modified_ts
+    if after_modified_ts is not None:
+        if 'modified_ts' not in query:
+            query['modified_ts'] = {}
+        query['modified_ts']["$gte"] = after_modified_ts
+
+    logger.debug(f"query: {query}")
+    found = db['ideas'].find(query).limit(1000)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas)
+    return IdeaList(data=ideas, query=query)
 
 
 @app.get("/ideas/{idea_id}", responses={

@@ -65,6 +65,7 @@ class IdeaRead(BaseModel):
 
 
 class IdeaList(BaseModel):
+    query: Union[dict, None] = None
     data: list[IdeaRead]
 
 
