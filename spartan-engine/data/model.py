@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Union, Dict, Any, Annotated, Optional
 
 from bson import ObjectId
@@ -70,12 +71,94 @@ class IdeaList(BaseModel):
     pagination: Union[dict, None] = None
 
 
-class Pagination(BaseModel):
-    total_records: int
-    current_page: int
-    total_pages: int
-    next_page: Union[int, None] = None
-    prev_page: Union[int, None] = None
+class IdeaReferenceType(str, Enum):
+    unlinked = "UNLINKED"
+    linked = "LINKED"
+
+
+class IdeaReferenceUpdate(BaseModel):
+    type: IdeaReferenceType
+
+
+class IdeaReferenceRead(BaseModel):
+    id: str
+    idea_id: str
+    name: str
+    type: IdeaReferenceType
+    created_ts: datetime
+    modified_ts: datetime
+
+
+class IdeaReferenceList(BaseModel):
+    data: list[IdeaReferenceRead]
+    query: Union[dict, None] = None
+    pagination: Union[dict, None] = None
+
+
+class IdeaSourceRead(BaseModel):
+    id: str
+    url: str
+    name: Union[str, None] = None
+    description: Union[str, None] = None
+    created_ts: datetime
+    modified_ts: datetime
+
+
+class IdeaSourceUpdate(BaseModel):
+    url: str
+    name: Union[str, None] = None
+    description: Union[str, None] = None
+
+
+class IdeaSourceList(BaseModel):
+    data: list[IdeaSourceRead]
+    query: Union[dict, None] = None
+    pagination: Union[dict, None] = None
+
+
+class EntityRead(BaseModel):
+    id: str
+    idea_id: Union[str, None] = None
+    media_id: Union[str, None] = None
+    text: str
+    label: str
+    start: Union[int, None] = None
+    end: Union[int, None] = None
+    created_ts: datetime
+    modified_ts: datetime
+
+
+class EntityUpdate(BaseModel):
+    text: str
+    label: str
+    start: Union[int, None] = None
+    end: Union[int, None] = None
+
+
+class EntityReferenceList(BaseModel):
+    data: list[EntityRead]
+    query: Union[dict, None] = None
+    pagination: Union[dict, None] = None
+
+
+class MediaRead(BaseModel):
+    id: str
+    name: str
+    url: str
+    created_ts: datetime
+    modified_ts: datetime
+
+
+class MediaUpdate(BaseModel):
+    id: str
+    name: str
+    url: str
+
+
+class MediaList(BaseModel):
+    data: list[MediaRead]
+    query: Union[dict, None] = None
+    pagination: Union[dict, None] = None
 
 
 def convert_doc_value(doc):
@@ -83,6 +166,8 @@ def convert_doc_value(doc):
     for k, v in doc.items():
         if k == '_id':
             data['id'] = str(v)
+        elif isinstance(v, ObjectId):
+            data[k] = str(v)
         elif isinstance(v, str) or isinstance(v, int) or isinstance(v, datetime):
             data[k] = v
         else:

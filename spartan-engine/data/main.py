@@ -17,7 +17,7 @@ from starlette.responses import JSONResponse
 from .config import ENV_VERSION, VALUE_UNKNOWN, ENV_MONGODB_URL, VALUE_DEFAULT_DB_NAME
 
 from .model import IdeaUpdate, IdeaRead, Root, ErrorResponseMessage, convert_doc_value, IdeaList, ContextRead, \
-    ContextList, IdeaPatch
+    ContextList, IdeaPatch, IdeaReferenceRead, IdeaReferenceList, IdeaReferenceUpdate
 
 logger = logging.getLogger(__name__)
 mongodb_client = MongoClient(os.environ[ENV_MONGODB_URL])
@@ -378,3 +378,81 @@ def create_idea(idea: IdeaUpdate) -> IdeaRead:
     new_idea = db['ideas'].insert_one(idea_json)
     data = convert_doc_value(db['ideas'].find_one({'_id': new_idea.inserted_id}))
     return IdeaRead(**data)
+
+
+@app.get("/ideas/{idea_id}/references", responses={
+    400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
+    404: {"model": ErrorResponseMessage, "description": "Not Found"}
+})
+def get_idea_references(idea_id: str, offset: int = 0, limit: int = 100, ) -> IdeaReferenceList:
+    try:
+        query = {'idea_id': ObjectId(idea_id)}
+        found = db['idea_references'].find(query).limit(limit).skip(offset * limit)
+        ideas = []
+        for f in found:
+            ideas.append(IdeaReferenceRead(**convert_doc_value(f)))
+        return IdeaReferenceList(data=ideas, query=convert_doc_value(query),
+                                 pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@app.post("/ideas/{idea_id}/references", responses={
+    400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
+    404: {"model": ErrorResponseMessage, "description": "Not Found"}
+})
+def create_idea_reference(idea_id: str, reference: IdeaReferenceUpdate):
+    try:
+        ref_json = jsonable_encoder(reference)
+        ref_json['idea_id'] = ObjectId(idea_id)
+        ref_json['type'] = reference.type
+        ref_json['created_ts'] = datetime.now()
+        ref_json['modified_ts'] = datetime.now()
+
+        new_idea = db['idea_references'].insert_one(ref_json)
+        data = convert_doc_value(db['idea_references'].find_one({'_id': new_idea.inserted_id}))
+        return IdeaReferenceRead(**data)
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@app.delete("/ideas/{idea_id}/references/{reference_id}", responses={
+    400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
+})
+def delete_idea(idea_id: str, reference_id: str):
+    try:
+        db['idea_references'].delete_one({'_id': ObjectId(reference_id), 'idea_id': ObjectId(idea_id)})
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@app.get("/references")
+def get_references(offset: int = 0, limit: int = 100, ) -> IdeaReferenceList:
+    query = {}
+    found = db['idea_references'].find(query).limit(limit).skip(offset * limit)
+    ideas = []
+    for f in found:
+        ideas.append(IdeaReferenceRead(**convert_doc_value(f)))
+    return IdeaReferenceList(data=ideas, query=convert_doc_value(query),
+                             pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
