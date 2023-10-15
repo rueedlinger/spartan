@@ -25,7 +25,7 @@ export SPARTAN_MONGODB_URL="mongodb://root:example@localhost:27017/spartan?authS
 ## UI
 ```bash
 cd spartan-engine
-uvicorn ui.main:app --reload --log-config=conf/log_conf.yaml
+uvicorn api.main:app --reload --log-config=conf/log_conf.yaml
 ```
 urls:
 - docs: http://127.0.0.1:8000/docs
