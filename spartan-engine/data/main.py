@@ -286,7 +286,7 @@ def update_idea(idea_id: str, idea: IdeaUpdate) -> IdeaRead:
             json = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
-                    message=f"ID has not a valid format",
+                    message=f"ID does not exist",
                     detail=f"id '{idea_id}' does not exist"
                 )
             )
@@ -325,7 +325,7 @@ def patch_idea(idea_id: str, idea: IdeaPatch) -> IdeaRead:
             json = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
-                    message=f"ID has not a valid format",
+                    message=f"ID does not exist",
                     detail=f"id '{idea_id}' does not exist"
                 )
             )
