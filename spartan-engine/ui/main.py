@@ -60,13 +60,13 @@ def read_tags() -> ContextList:
 
 
 @app.get("/tags/{tag_name}")
-def get_ideas_by_tag(tag_name: str) -> IdeaList:
+def get_ideas_by_tag(tag_name: str, offset: int = 0, limit: int = 100,) -> IdeaList:
     query = {"tags": {"$in": [tag_name]}}
-    found = db['ideas'].find(query).limit(1000)
+    found = db['ideas'].find(query).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas, query=query)
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
 
 
 @app.get("/projects")
@@ -83,16 +83,16 @@ def read_projects() -> ContextList:
 
 
 @app.get("/projects/{project_name:path}")
-def get_ideas_by_project(project_name: str, exact_match: bool = True) -> IdeaList:
+def get_ideas_by_project(project_name: str, offset: int = 0, limit: int = 100, exact_match: bool = True) -> IdeaList:
     if exact_match:
         query = {"project": project_name}
     else:
         query = {"project": {"$regex": f"{project_name}"}}
-    found = db['ideas'].find(query).limit(1000)
+    found = db['ideas'].find(query).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas, query=query)
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
 
 
 @app.get("/areas")
@@ -109,16 +109,16 @@ def read_areas() -> ContextList:
 
 
 @app.get("/areas/{area_name:path}")
-def get_ideas_by_area(area_name: str, exact_match: bool = True) -> IdeaList:
+def get_ideas_by_area(area_name: str, offset: int = 0, limit: int = 100, exact_match: bool = True) -> IdeaList:
     if exact_match:
         query = {"area": area_name}
     else:
         query = {"area": {"$regex": f"{area_name}"}}
-    found = db['ideas'].find(query).limit(1000)
+    found = db['ideas'].find(query).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas, query=query)
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
 
 
 @app.get("/resources")
@@ -135,16 +135,16 @@ def read_resources() -> ContextList:
 
 
 @app.get("/resources/{resource_name:path}")
-def get_ideas_by_resource(resource_name: str, exact_match: bool = True) -> IdeaList:
+def get_ideas_by_resource(resource_name: str, offset: int = 0, limit: int = 100, exact_match: bool = True) -> IdeaList:
     if exact_match:
         query = {"resource": resource_name}
     else:
         query = {"resource": {"$regex": f"{resource_name}"}}
-    found = db['ideas'].find(query).limit(1000)
+    found = db['ideas'].find(query).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas, query=query)
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
 
 
 @app.get("/archives")
@@ -161,16 +161,17 @@ def read_archives() -> ContextList:
 
 
 @app.get("/archives/{archive_name:path}")
-def get_ideas_by_archive(archive_name: str, exact_match: bool = True) -> IdeaList:
+def get_ideas_by_archive(archive_name: str, offset: int = 0, limit: int = 100,  exact_match: bool = True) -> IdeaList:
+
     if exact_match:
         query = {"archive": archive_name}
     else:
         query = {"archive": {"$regex": f"{archive_name}"}}
-    found = db['ideas'].find(query).limit(1000)
+    found = db['ideas'].find(query).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaRead(**convert_doc_value(f)))
-    return IdeaList(data=ideas, query=query)
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
 
 
 @app.get("/ideas")
