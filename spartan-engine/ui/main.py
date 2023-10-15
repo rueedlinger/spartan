@@ -109,7 +109,7 @@ def read_areas() -> ContextList:
 
 
 @app.get("/areas/{area_name:path}")
-def get_ideas_by_area(area_name: str,  exact_match: bool = True) -> IdeaList:
+def get_ideas_by_area(area_name: str, exact_match: bool = True) -> IdeaList:
     if exact_match:
         query = {"area": area_name}
     else:
@@ -189,7 +189,6 @@ def read_ideas(
         after_created_ts: datetime | None = None,
         before_modified_ts: datetime | None = None,
         after_modified_ts: datetime | None = None) -> IdeaList:
-
     query = {}
     if name is not None:
         query['name'] = name
@@ -214,16 +213,12 @@ def read_ideas(
     if before_modified_ts is not None:
         if 'modified_ts' not in query:
             query['modified_ts'] = {}
-        query['modified_ts']["$lte"]= before_modified_ts
+        query['modified_ts']["$lte"] = before_modified_ts
     if after_modified_ts is not None:
         if 'modified_ts' not in query:
             query['modified_ts'] = {}
         query['modified_ts']["$gte"] = after_modified_ts
 
-    logger.debug(f"query: {query}")
-
-    sorting_key = '_id'
-    sorting_order = -1
     if sort_by is not None:
         sorting_key = sort_by
     if sort_order is not None:
@@ -231,7 +226,12 @@ def read_ideas(
             sorting_order = 1
         else:
             sorting_order = -1
+    else:
+        sorting_order = -1
+    if sort_by == 'id' or sort_by is None:
+        sorting_key = '_id'
 
+    logger.debug(f"query: {query}, sorting: '{sorting_key}', '{sorting_order}'")
     found = db['ideas'].find(query).sort(sorting_key, sorting_order).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
