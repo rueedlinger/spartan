@@ -1,12 +1,11 @@
 import hashlib
 import logging
-from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Annotated
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query
 
 import os
 
@@ -18,21 +17,12 @@ from starlette.responses import JSONResponse
 from .config import ENV_VERSION, VALUE_UNKNOWN, ENV_MONGODB_URL, VALUE_DEFAULT_DB_NAME
 
 from .model import IdeaUpdate, IdeaRead, Root, ErrorResponseMessage, convert_doc_value, IdeaList, ContextRead, \
-    ContextList
+    ContextList, IdeaPatch
 
 logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("starting up...")
-    yield
-    logger.info("shutting down down...")
-
-
-client = MongoClient(os.environ[ENV_MONGODB_URL])
-client.admin.command('ping')
-db = client.get_default_database(VALUE_DEFAULT_DB_NAME)
+mongodb_client = MongoClient(os.environ[ENV_MONGODB_URL])
+mongodb_client.admin.command('ping')
+db = mongodb_client.get_default_database(VALUE_DEFAULT_DB_NAME)
 logger.info(f"using db {db.name}")
 
 app = FastAPI()
@@ -60,7 +50,7 @@ def read_tags() -> ContextList:
 
 
 @app.get("/tags/{tag_name}")
-def get_ideas_by_tag(tag_name: str, offset: int = 0, limit: int = 100,) -> IdeaList:
+def get_ideas_by_tag(tag_name: str, offset: int = 0, limit: int = 100, ) -> IdeaList:
     query = {"tags": {"$in": [tag_name]}}
     found = db['ideas'].find(query).limit(limit).skip(offset * limit)
     ideas = []
@@ -161,8 +151,7 @@ def read_archives() -> ContextList:
 
 
 @app.get("/archives/{archive_name:path}")
-def get_ideas_by_archive(archive_name: str, offset: int = 0, limit: int = 100,  exact_match: bool = True) -> IdeaList:
-
+def get_ideas_by_archive(archive_name: str, offset: int = 0, limit: int = 100, exact_match: bool = True) -> IdeaList:
     if exact_match:
         query = {"archive": archive_name}
     else:
@@ -269,8 +258,26 @@ def read_idea(idea_id: str) -> IdeaRead:
         return JSONResponse(content=json, status_code=400)
 
 
+@app.delete("/ideas/{idea_id}", responses={
+    400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
+})
+def delete_idea(idea_id: str):
+    try:
+        db['ideas'].delete_one({'_id': ObjectId(idea_id)})
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
 @app.put("/ideas/{idea_id}", responses={
-    404: {"model": ErrorResponseMessage, "description": "Not Found"}
+    404: {"model": ErrorResponseMessage, "description": "Not Found"},
+    400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
 })
 def update_idea(idea_id: str, idea: IdeaUpdate) -> IdeaRead:
     try:
@@ -293,6 +300,55 @@ def update_idea(idea_id: str, idea: IdeaUpdate) -> IdeaRead:
         idea_json['modified_ts'] = datetime.now()
 
         db['ideas'].update_one({'_id': ObjectId(idea_id)}, {"$set": idea_json})
+        data = convert_doc_value(db['ideas'].find_one({'_id': ObjectId(idea_id)}))
+        return IdeaRead(**data)
+
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@app.patch("/ideas/{idea_id}", responses={
+    404: {"model": ErrorResponseMessage, "description": "Not Found"},
+    400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
+})
+def patch_idea(idea_id: str, idea: IdeaPatch) -> IdeaRead:
+    try:
+        found = db['ideas'].find_one({'_id': ObjectId(idea_id)})
+        if found is None:
+            json = jsonable_encoder(
+                ErrorResponseMessage(
+                    error="ID_ERROR",
+                    message=f"ID has not a valid format",
+                    detail=f"id '{idea_id}' does not exist"
+                )
+            )
+            return JSONResponse(content=json, status_code=404)
+
+        update_data = idea.model_dump(exclude_unset=True)
+
+        if 'content' in update_data:
+            m = hashlib.sha256()
+            update_data['size'] = len(idea.content)
+            update_data['hash'] = m.hexdigest()
+            update_data['hash_type'] = 'sha256'
+
+        if 'tags' in update_data:
+            if update_data['tags'] is not None:
+                update_data['tags'] = [str(k) for k in update_data['tags']]
+            else:
+                update_data['tags'] = None
+
+        if len(update_data.keys()) > 0:
+            update_data['modified_ts'] = datetime.now()
+            db['ideas'].update_one({'_id': ObjectId(idea_id)}, {"$set": update_data})
+
         data = convert_doc_value(db['ideas'].find_one({'_id': ObjectId(idea_id)}))
         return IdeaRead(**data)
 
