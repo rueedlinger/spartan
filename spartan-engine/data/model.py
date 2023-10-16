@@ -36,6 +36,7 @@ class IdeaUpdate(BaseModel):
     area: Union[str, None] = None
     resource: Union[str, None] = None
     archive: Union[str, None] = None
+    attributes: Union[dict, None] = None
 
 
 class IdeaPatch(BaseModel):
@@ -46,6 +47,7 @@ class IdeaPatch(BaseModel):
     area: Union[str, None] = None
     resource: Union[str, None] = None
     archive: Union[str, None] = None
+    attributes: Union[dict, None] = None
 
 
 class IdeaRead(BaseModel):
@@ -60,6 +62,7 @@ class IdeaRead(BaseModel):
     hash: str
     hash_type: str
     size: int
+    attributes: Union[dict, None] = None
     index_ts: Union[datetime, None] = None
     created_ts: datetime
     modified_ts: datetime
@@ -77,6 +80,8 @@ class IdeaReferenceType(str, Enum):
 
 
 class IdeaReferenceUpdate(BaseModel):
+    idea_id: str
+    name: str
     type: IdeaReferenceType
 
 
@@ -99,7 +104,7 @@ class IdeaSourceRead(BaseModel):
     id: str
     url: str
     name: Union[str, None] = None
-    description: Union[str, None] = None
+    attributes: Union[dict, None] = None
     created_ts: datetime
     modified_ts: datetime
 
@@ -107,7 +112,7 @@ class IdeaSourceRead(BaseModel):
 class IdeaSourceUpdate(BaseModel):
     url: str
     name: Union[str, None] = None
-    description: Union[str, None] = None
+    attributes: Union[dict, None] = None
 
 
 class IdeaSourceList(BaseModel):
@@ -120,23 +125,52 @@ class EntityRead(BaseModel):
     id: str
     idea_id: Union[str, None] = None
     media_id: Union[str, None] = None
-    text: str
-    label: str
+    value: str
+    type: str
     start: Union[int, None] = None
     end: Union[int, None] = None
+    attributes: Union[dict, None] = None
     created_ts: datetime
     modified_ts: datetime
 
 
 class EntityUpdate(BaseModel):
-    text: str
-    label: str
+    idea_id: Union[str, None] = None
+    media_id: Union[str, None] = None
+    value: str
+    type: str
     start: Union[int, None] = None
     end: Union[int, None] = None
+    attributes: Union[dict, None] = None
 
 
-class EntityReferenceList(BaseModel):
+class EntityList(BaseModel):
     data: list[EntityRead]
+    query: Union[dict, None] = None
+    pagination: Union[dict, None] = None
+
+
+class LabelRead(BaseModel):
+    id: str
+    idea_id: Union[str, None] = None
+    media_id: Union[str, None] = None
+    value: str
+    type: str
+    attributes: Union[dict, None] = None
+    created_ts: datetime
+    modified_ts: datetime
+
+
+class LabelUpdate(BaseModel):
+    idea_id: Union[str, None] = None
+    media_id: Union[str, None] = None
+    value: str
+    type: str
+    attributes: Union[dict, None] = None
+
+
+class LabelList(BaseModel):
+    data: list[LabelRead]
     query: Union[dict, None] = None
     pagination: Union[dict, None] = None
 
@@ -144,15 +178,18 @@ class EntityReferenceList(BaseModel):
 class MediaRead(BaseModel):
     id: str
     name: str
-    url: str
+    attributes: Union[dict, None] = None
+    hash: Union[str, None] = None
+    hash_type: Union[str, None] = None
     created_ts: datetime
     modified_ts: datetime
 
 
 class MediaUpdate(BaseModel):
-    id: str
     name: str
-    url: str
+    attributes: Union[dict, None] = None
+    hash: Union[str, None] = None
+    hash_type: Union[str, None] = None
 
 
 class MediaList(BaseModel):

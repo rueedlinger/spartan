@@ -36,6 +36,16 @@ def read_root(request: Request) -> Root:
     return Root(version=version, docs=str(request.url) + "docs", redoc=str(request.url) + "redoc")
 
 
+@app.get("/inbox")
+def get_ideas_without_para(offset: int = 0, limit: int = 100) -> IdeaList:
+
+    query = {"project": {"$eq": None}, "area": {"$eq": None}, "resource": {"$eq": None}, "archive": {"$eq": None}}
+    found = db['ideas'].find(query).limit(limit).skip(offset * limit)
+    ideas = []
+    for f in found:
+        ideas.append(IdeaRead(**convert_doc_value(f)))
+    return IdeaList(data=ideas, query=query, pagination={'offset': offset, 'limit': limit, 'count': len(ideas)})
+
 @app.get("/tags")
 def read_tags() -> ContextList:
     pipeline = [
@@ -384,7 +394,7 @@ def create_idea(idea: IdeaUpdate) -> IdeaRead:
     400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
     404: {"model": ErrorResponseMessage, "description": "Not Found"}
 })
-def get_idea_references(idea_id: str, offset: int = 0, limit: int = 100, ) -> IdeaReferenceList:
+def get_references_from_idea(idea_id: str, offset: int = 0, limit: int = 100, ) -> IdeaReferenceList:
     try:
         query = {'idea_id': ObjectId(idea_id)}
         found = db['idea_references'].find(query).limit(limit).skip(offset * limit)
@@ -404,17 +414,28 @@ def get_idea_references(idea_id: str, offset: int = 0, limit: int = 100, ) -> Id
         return JSONResponse(content=json, status_code=400)
 
 
-@app.post("/ideas/{idea_id}/references", responses={
+@app.post("/references", responses={
     400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
     404: {"model": ErrorResponseMessage, "description": "Not Found"}
 })
-def create_idea_reference(idea_id: str, reference: IdeaReferenceUpdate):
+def create_reference(reference: IdeaReferenceUpdate):
     try:
         ref_json = jsonable_encoder(reference)
-        ref_json['idea_id'] = ObjectId(idea_id)
+        ref_json['idea_id'] = ObjectId(reference.idea_id)
         ref_json['type'] = reference.type
         ref_json['created_ts'] = datetime.now()
         ref_json['modified_ts'] = datetime.now()
+
+        print(ObjectId(reference.idea_id))
+        if db['ideas'].find_one({'_id': ObjectId(reference.idea_id)}) is None:
+            json = jsonable_encoder(
+                ErrorResponseMessage(
+                    error="ID_ERROR",
+                    message=f"ID does not exist",
+                    detail=f"idea_id '{reference.idea_id}' does not exist"
+                )
+            )
+            return JSONResponse(content=json, status_code=404)
 
         new_idea = db['idea_references'].insert_one(ref_json)
         data = convert_doc_value(db['idea_references'].find_one({'_id': new_idea.inserted_id}))
@@ -430,12 +451,12 @@ def create_idea_reference(idea_id: str, reference: IdeaReferenceUpdate):
         return JSONResponse(content=json, status_code=400)
 
 
-@app.delete("/ideas/{idea_id}/references/{reference_id}", responses={
+@app.delete("/references/{reference_id}", responses={
     400: {"model": ErrorResponseMessage, "description": "Invalid Input"},
 })
-def delete_idea(idea_id: str, reference_id: str):
+def delete_reference(reference_id: str):
     try:
-        db['idea_references'].delete_one({'_id': ObjectId(reference_id), 'idea_id': ObjectId(idea_id)})
+        db['idea_references'].delete_one({'_id': ObjectId(reference_id)})
     except InvalidId as ex:
         json = jsonable_encoder(
             ErrorResponseMessage(
@@ -448,9 +469,53 @@ def delete_idea(idea_id: str, reference_id: str):
 
 
 @app.get("/references")
-def get_references(offset: int = 0, limit: int = 100, ) -> IdeaReferenceList:
+def get_references(
+        offset: int = 0,
+        limit: int = 100,
+        sort_by: str | None = None,
+        sort_order: Annotated[str | None, Query(pattern="^asc$|^desc$")] = None,
+        name: str | None = None,
+        type: str | None = None,
+        before_created_ts: datetime | None = None,
+        after_created_ts: datetime | None = None,
+        before_modified_ts: datetime | None = None,
+        after_modified_ts: datetime | None = None) -> IdeaReferenceList:
     query = {}
-    found = db['idea_references'].find(query).limit(limit).skip(offset * limit)
+    if name is not None:
+        query['name'] = name
+    if type is not None:
+        query['type'] = type
+    if before_created_ts is not None:
+        if 'created_ts' not in query:
+            query['created_ts'] = {}
+        query['created_ts']["$lte"] = before_created_ts
+    if after_created_ts is not None:
+        if 'created_ts' not in query:
+            query['created_ts'] = {}
+        query['created_ts']["$gte"] = after_created_ts
+    if before_modified_ts is not None:
+        if 'modified_ts' not in query:
+            query['modified_ts'] = {}
+        query['modified_ts']["$lte"] = before_modified_ts
+    if after_modified_ts is not None:
+        if 'modified_ts' not in query:
+            query['modified_ts'] = {}
+        query['modified_ts']["$gte"] = after_modified_ts
+
+    if sort_by is not None:
+        sorting_key = sort_by
+    if sort_order is not None:
+        if sort_order.lower() == 'asc':
+            sorting_order = 1
+        else:
+            sorting_order = -1
+    else:
+        sorting_order = -1
+    if sort_by == 'id' or sort_by is None:
+        sorting_key = '_id'
+
+    logger.debug(f"query: {query}, sorting: '{sorting_key}', '{sorting_order}'")
+    found = db['idea_references'].find(query).sort(sorting_key, sorting_order).limit(limit).skip(offset * limit)
     ideas = []
     for f in found:
         ideas.append(IdeaReferenceRead(**convert_doc_value(f)))
