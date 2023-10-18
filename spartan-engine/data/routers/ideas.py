@@ -203,7 +203,8 @@ def create_idea(idea: IdeaUpdate, db=Depends(get_mongodb_session)) -> IdeaRead:
 
 
 @router.get("/{idea_id}/references")
-def get_references_from_idea(idea_id: str, pagination: Annotated[PaginationParameter, Depends(pagination_params)],
+def get_references_from_idea(idea_id: str,
+                             pagination: Annotated[PaginationParameter, Depends(pagination_params)],
                              db=Depends(get_mongodb_session)) -> IdeaReferenceList:
     try:
         query = {'idea_id': ObjectId(idea_id)}

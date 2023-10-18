@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class EntityRead(BaseModel):
     id: str
     idea_id: Union[str, None] = None
-    media_id: Union[str, None] = None
+    file_id: Union[str, None] = None
     value: str
     type: str
     start: Union[int, None] = None
@@ -19,7 +19,7 @@ class EntityRead(BaseModel):
 
 class EntityUpdate(BaseModel):
     idea_id: Union[str, None] = None
-    media_id: Union[str, None] = None
+    file_id: Union[str, None] = None
     value: str
     type: str
     start: Union[int, None] = None

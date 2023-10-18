@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Annotated
 
+from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import Query
 
 
@@ -67,11 +69,17 @@ def to_query(**kwargs) -> dict:
     for k, v in kwargs.items():
         if v is None:
             continue
-        if isinstance(v, str) or isinstance(v, int):
+
+        if '_id' in k:
+            try:
+                query[k] = ObjectId(v)
+            except InvalidId as ex:
+                query[k] = v
+        elif isinstance(v, str) or isinstance(v, int):
             query[k] = v
-        if isinstance(v, list):
+        elif isinstance(v, list):
             query[k] = {"$in": v}
-        if isinstance(v, datetime):
+        elif isinstance(v, datetime):
             if 'before_' in k:
                 new_key = k.replace('before_', '')
                 if new_key not in query:

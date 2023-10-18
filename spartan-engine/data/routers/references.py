@@ -27,7 +27,7 @@ router = APIRouter(
 
 
 @router.post("/")
-def create_reference(reference: IdeaReferenceUpdate, db=Depends(get_mongodb_session)):
+def create_reference(reference: IdeaReferenceUpdate, db=Depends(get_mongodb_session)) -> IdeaReferenceRead:
     try:
         ref_json = jsonable_encoder(reference)
         ref_json['idea_id'] = ObjectId(reference.idea_id)
@@ -35,7 +35,6 @@ def create_reference(reference: IdeaReferenceUpdate, db=Depends(get_mongodb_sess
         ref_json['created_ts'] = datetime.now()
         ref_json['modified_ts'] = datetime.now()
 
-        print(ObjectId(reference.idea_id))
         if db['ideas'].find_one({'_id': ObjectId(reference.idea_id)}) is None:
             json = jsonable_encoder(
                 ErrorResponseMessage(
@@ -86,6 +85,7 @@ def get_references(
         before_modified_ts: datetime | None = None,
         after_modified_ts: datetime | None = None,
         db=Depends(get_mongodb_session)) -> IdeaReferenceList:
+
     query = to_query(name=name, type=type,
                      before_modified_ts=before_modified_ts, after_modified_ts=after_modified_ts,
                      before_created_ts=before_created_ts, after_created_ts=after_created_ts)
