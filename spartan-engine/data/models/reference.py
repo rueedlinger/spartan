@@ -29,3 +29,4 @@ class IdeaReferenceList(BaseModel):
     data: list[IdeaReferenceRead]
     query: Union[dict, None] = None
     pagination: Union[dict, None] = None
+    sorting: Union[dict, None] = None

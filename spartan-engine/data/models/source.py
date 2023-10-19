@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class IdeaSourceRead(BaseModel):
     id: str
+    idea_id: str
     url: str
     name: Union[str, None] = None
     attributes: Union[dict, None] = None
@@ -14,6 +15,7 @@ class IdeaSourceRead(BaseModel):
 
 
 class IdeaSourceUpdate(BaseModel):
+    idea_id: str
     url: str
     name: Union[str, None] = None
     attributes: Union[dict, None] = None
@@ -23,3 +25,4 @@ class IdeaSourceList(BaseModel):
     data: list[IdeaSourceRead]
     query: Union[dict, None] = None
     pagination: Union[dict, None] = None
+    sorting: Union[dict, None] = None

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class FiletRead(BaseModel):
     id: str
+    idea_id: str
     name: str
     attributes: Union[dict, None] = None
     hash: Union[str, None] = None
@@ -15,6 +16,7 @@ class FiletRead(BaseModel):
 
 
 class FileUpdate(BaseModel):
+    idea_id: str
     name: str
     attributes: Union[dict, None] = None
     hash: Union[str, None] = None
@@ -25,3 +27,4 @@ class FileList(BaseModel):
     data: list[FiletRead]
     query: Union[dict, None] = None
     pagination: Union[dict, None] = None
+    sorting: Union[dict, None] = None

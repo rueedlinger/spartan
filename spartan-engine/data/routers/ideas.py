@@ -1,11 +1,11 @@
 import hashlib
 import logging
 from datetime import datetime
-from typing import Annotated, List, Any
+from typing import Annotated, List
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import JSONResponse
 
@@ -13,6 +13,10 @@ from ..models import convert
 from ..models.error import ErrorResponseMessage
 from ..models.idea import IdeaList, IdeaRead, IdeaUpdate, IdeaPatch
 from ..models.reference import IdeaReferenceRead, IdeaReferenceList
+from ..models.source import IdeaSourceRead, IdeaSourceList
+from ..models.entity import EntityRead, EntityList
+from ..models.label import LabelRead, LabelList
+from ..models.files import FiletRead, FileList
 from ..models.http import pagination_params, PaginationParameter, sorting_params, SortingParameter, to_query
 from ..dependencies import get_mongodb_session
 
@@ -209,13 +213,103 @@ def get_references_from_idea(idea_id: str,
     try:
         query = {'idea_id': ObjectId(idea_id)}
         found = db['idea_references'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
-        ideas = []
-        print(convert(query))
+        items = []
         for f in found:
-            print(convert(f))
-            ideas.append(IdeaReferenceRead(**convert(f)))
-        return IdeaReferenceList(data=ideas, query=convert(query),
-                                 pagination=pagination.to_dict({'count': len(ideas)}))
+            items.append(IdeaReferenceRead(**convert(f)))
+        return IdeaReferenceList(data=items, query=convert(query),
+                                 pagination=pagination.to_dict({'count': len(items)}))
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@router.get("/{idea_id}/sources")
+def get_sources_from_idea(idea_id: str,
+                          pagination: Annotated[PaginationParameter, Depends(pagination_params)],
+                          db=Depends(get_mongodb_session)) -> IdeaSourceList:
+    try:
+        query = {'idea_id': ObjectId(idea_id)}
+        found = db['sources'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
+        items = []
+        for f in found:
+            items.append(IdeaSourceRead(**convert(f)))
+        return IdeaSourceList(data=items, query=convert(query),
+                              pagination=pagination.to_dict({'count': len(items)}))
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@router.get("/{idea_id}/entities")
+def get_entities_from_idea(idea_id: str,
+                           pagination: Annotated[PaginationParameter, Depends(pagination_params)],
+                           db=Depends(get_mongodb_session)) -> EntityList:
+    try:
+        query = {'idea_id': ObjectId(idea_id)}
+        found = db['entities'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
+        items = []
+        for f in found:
+            items.append(EntityRead(**convert(f)))
+        return EntityList(data=items, query=convert(query),
+                          pagination=pagination.to_dict({'count': len(items)}))
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@router.get("/{idea_id}/labels")
+def get_labels_from_idea(idea_id: str,
+                         pagination: Annotated[PaginationParameter, Depends(pagination_params)],
+                         db=Depends(get_mongodb_session)) -> LabelList:
+    try:
+        query = {'idea_id': ObjectId(idea_id)}
+        found = db['labels'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
+        items = []
+        for f in found:
+            items.append(LabelRead(**convert(f)))
+        return LabelList(data=items, query=convert(query),
+                         pagination=pagination.to_dict({'count': len(items)}))
+    except InvalidId as ex:
+        json = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=json, status_code=400)
+
+
+@router.get("/{idea_id}/files")
+def get_files_from_idea(idea_id: str,
+                        pagination: Annotated[PaginationParameter, Depends(pagination_params)],
+                        db=Depends(get_mongodb_session)) -> FileList:
+    try:
+        query = {'idea_id': ObjectId(idea_id)}
+        found = db['files'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
+        items = []
+        for f in found:
+            items.append(FiletRead(**convert(f)))
+        return FileList(data=items, query=convert(query),
+                        pagination=pagination.to_dict({'count': len(items)}))
     except InvalidId as ex:
         json = jsonable_encoder(
             ErrorResponseMessage(

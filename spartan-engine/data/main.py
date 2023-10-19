@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI
 
 from .dependencies import get_mongodb_session
-from .routers import ideas, references, tags, projects, areas, resouces, archives, entities
+from .routers import ideas, references, tags, projects, areas, resouces, archives, entities, sources, labels, files
 from .models import convert
 from .models.idea import IdeaList, IdeaRead
 from .models.http import pagination_params, PaginationParameter, SortingParameter, sorting_params
@@ -19,7 +19,10 @@ app.include_router(areas.router)
 app.include_router(resouces.router)
 app.include_router(archives.router)
 app.include_router(references.router)
+app.include_router(sources.router)
 app.include_router(entities.router)
+app.include_router(labels.router)
+app.include_router(files.router)
 
 
 @app.get("/", tags=["root"])
