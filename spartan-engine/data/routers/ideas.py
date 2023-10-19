@@ -12,7 +12,7 @@ from starlette.responses import JSONResponse
 from ..models import convert
 from ..models.error import ErrorResponseMessage
 from ..models.idea import IdeaList, IdeaRead, IdeaUpdate, IdeaPatch
-from ..models.reference import IdeaReferenceRead, IdeaReferenceList
+from ..models.reference import ReferenceRead, ReferenceList
 from ..models.source import IdeaSourceRead, IdeaSourceList
 from ..models.entity import EntityRead, EntityList
 from ..models.label import LabelRead, LabelList
@@ -209,15 +209,15 @@ def create_idea(idea: IdeaUpdate, db=Depends(get_mongodb_session)) -> IdeaRead:
 @router.get("/{idea_id}/references")
 def get_references_from_idea(idea_id: str,
                              pagination: Annotated[PaginationParameter, Depends(pagination_params)],
-                             db=Depends(get_mongodb_session)) -> IdeaReferenceList:
+                             db=Depends(get_mongodb_session)) -> ReferenceList:
     try:
-        query = {'idea_id': ObjectId(idea_id)}
-        found = db['idea_references'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
+        query = {'$or': [{'target_idea_id': ObjectId(idea_id)}, {'source_idea_id': ObjectId(idea_id)}]}
+        found = db['references'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
         items = []
         for f in found:
-            items.append(IdeaReferenceRead(**convert(f)))
-        return IdeaReferenceList(data=items, query=convert(query),
-                                 pagination=pagination.to_dict({'count': len(items)}))
+            items.append(ReferenceRead(**convert(f)))
+        return ReferenceList(data=items, query=convert(query),
+                             pagination=pagination.to_dict({'count': len(items)}))
     except InvalidId as ex:
         json = jsonable_encoder(
             ErrorResponseMessage(

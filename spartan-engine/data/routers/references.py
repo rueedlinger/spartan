@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse
 
 from ..models import convert
 from ..models.error import ErrorResponseMessage
-from ..models.reference import IdeaReferenceRead, IdeaReferenceList, IdeaReferenceUpdate
+from ..models.reference import ReferenceRead, ReferenceList, ReferenceUpdate
 from ..models.http import pagination_params, PaginationParameter, sorting_params, SortingParameter, to_query
 from ..dependencies import get_mongodb_session
 
@@ -27,26 +27,49 @@ router = APIRouter(
 
 
 @router.post("/")
-def create_reference(reference: IdeaReferenceUpdate, db=Depends(get_mongodb_session)) -> IdeaReferenceRead:
+def create_reference(reference: ReferenceUpdate, db=Depends(get_mongodb_session)) -> ReferenceRead:
     try:
         ref_json = jsonable_encoder(reference)
-        ref_json['idea_id'] = ObjectId(reference.idea_id)
         ref_json['created_ts'] = datetime.now()
         ref_json['modified_ts'] = datetime.now()
 
-        if db['ideas'].find_one({'_id': ObjectId(reference.idea_id)}) is None:
+        if reference.target_idea_id is None and reference.source_idea_id is None:
             json = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
-                    message=f"ID does not exist",
-                    detail=f"idea_id '{reference.idea_id}' does not exist"
+                    message=f"Missing ID",
+                    detail=f"Provide 'target_idea_id' or 'source_idea_id'"
                 )
             )
-            return JSONResponse(content=json, status_code=404)
+            return JSONResponse(content=json, status_code=400)
 
-        new_idea = db['idea_references'].insert_one(ref_json)
-        data = convert(db['idea_references'].find_one({'_id': new_idea.inserted_id}))
-        return IdeaReferenceRead(**data)
+        if reference.target_idea_id is not None:
+            if db['ideas'].find_one({'_id': ObjectId(reference.target_idea_id)}) is None:
+                json = jsonable_encoder(
+                    ErrorResponseMessage(
+                        error="ID_ERROR",
+                        message=f"ID does not exist",
+                        detail=f"target_idea_id '{reference.target_idea_id}' does not exist"
+                    )
+                )
+                return JSONResponse(content=json, status_code=404)
+            ref_json['target_idea_id'] = ObjectId(reference.target_idea_id)
+
+        if reference.source_idea_id is not None:
+            if db['ideas'].find_one({'_id': ObjectId(reference.source_idea_id)}) is None:
+                json = jsonable_encoder(
+                    ErrorResponseMessage(
+                        error="ID_ERROR",
+                        message=f"ID does not exist",
+                        detail=f"source_idea_id '{reference.source_idea_id}' does not exist"
+                    )
+                )
+                return JSONResponse(content=json, status_code=404)
+            ref_json['source_idea_id'] = ObjectId(reference.source_idea_id)
+
+        new_idea = db['references'].insert_one(ref_json)
+        data = convert(db['references'].find_one({'_id': new_idea.inserted_id}))
+        return ReferenceRead(**data)
     except InvalidId as ex:
         json = jsonable_encoder(
             ErrorResponseMessage(
@@ -61,7 +84,7 @@ def create_reference(reference: IdeaReferenceUpdate, db=Depends(get_mongodb_sess
 @router.delete("/{reference_id}")
 def delete_reference(reference_id: str, db=Depends(get_mongodb_session)):
     try:
-        db['idea_references'].delete_one({'_id': ObjectId(reference_id)})
+        db['references'].delete_one({'_id': ObjectId(reference_id)})
     except InvalidId as ex:
         json = jsonable_encoder(
             ErrorResponseMessage(
@@ -77,16 +100,16 @@ def delete_reference(reference_id: str, db=Depends(get_mongodb_session)):
 def get_references(
         pagination: Annotated[PaginationParameter, Depends(pagination_params)],
         sorting: Annotated[SortingParameter, Depends(sorting_params)],
-        idea_id: str | None = None,
-        name: str | None = None,
+        target_idea_id: str | None = None,
+        source_idea_id: str | None = None,
         type: str | None = None,
         before_created_ts: datetime | None = None,
         after_created_ts: datetime | None = None,
         before_modified_ts: datetime | None = None,
         after_modified_ts: datetime | None = None,
-        db=Depends(get_mongodb_session)) -> IdeaReferenceList:
+        db=Depends(get_mongodb_session)) -> ReferenceList:
 
-    query = to_query(idea_id=idea_id, name=name, type=type,
+    query = to_query(target_idea_id=target_idea_id, source_idea_id=source_idea_id, type=type,
                      before_modified_ts=before_modified_ts, after_modified_ts=after_modified_ts,
                      before_created_ts=before_created_ts, after_created_ts=after_created_ts)
 
@@ -95,10 +118,10 @@ def get_references(
         found = db['idea_references'].find(query).sort(*sorting.get_sort_param()).limit(pagination.limit).skip(
             pagination.offset * pagination.limit)
     else:
-        found = db['idea_references'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
+        found = db['references'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
     ideas = []
     for f in found:
-        ideas.append(IdeaReferenceRead(**convert(f)))
-    return IdeaReferenceList(data=ideas, query=convert(query),
-                             pagination=pagination.to_dict({'count': len(ideas)}),
-                             sorting=sorting.to_dict())
+        ideas.append(ReferenceRead(**convert(f)))
+    return ReferenceList(data=ideas, query=convert(query),
+                         pagination=pagination.to_dict({'count': len(ideas)}),
+                         sorting=sorting.to_dict())

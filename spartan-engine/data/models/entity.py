@@ -12,6 +12,7 @@ class EntityRead(BaseModel):
     type: str
     start: Union[int, None] = None
     end: Union[int, None] = None
+    unit: Union[int, None] = None
     attributes: Union[dict, None] = None
     created_ts: datetime
     modified_ts: datetime
@@ -24,6 +25,7 @@ class EntityUpdate(BaseModel):
     type: str
     start: Union[int, None] = None
     end: Union[int, None] = None
+    unit: Union[int, None] = None
     attributes: Union[dict, None] = None
 
 

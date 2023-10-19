@@ -5,28 +5,30 @@ from typing import Union
 from pydantic import BaseModel
 
 
-class IdeaReferenceType(str, Enum):
+class ReferenceType(str, Enum):
     unlinked = "UNLINKED"
     linked = "LINKED"
 
 
-class IdeaReferenceUpdate(BaseModel):
-    idea_id: str
-    name: str
-    type: IdeaReferenceType
+class ReferenceUpdate(BaseModel):
+    source_idea_id: Union[str, None] = None
+    target_idea_id: Union[str, None] = None
+    type: ReferenceType
+    attributes: Union[dict, None] = None
 
 
-class IdeaReferenceRead(BaseModel):
+class ReferenceRead(BaseModel):
     id: str
-    idea_id: str
-    name: str
-    type: IdeaReferenceType
+    source_idea_id: Union[str, None] = None
+    target_idea_id: Union[str, None] = None
+    type: ReferenceType
+    attributes: Union[dict, None] = None
     created_ts: datetime
     modified_ts: datetime
 
 
-class IdeaReferenceList(BaseModel):
-    data: list[IdeaReferenceRead]
+class ReferenceList(BaseModel):
+    data: list[ReferenceRead]
     query: Union[dict, None] = None
     pagination: Union[dict, None] = None
     sorting: Union[dict, None] = None
