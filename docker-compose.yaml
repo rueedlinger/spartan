@@ -19,3 +19,14 @@ services:
       ME_CONFIG_MONGODB_ENABLE_ADMIN: true
       ME_CONFIG_BASICAUTH: false
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2023-10-14T05-17-22Z
+    ports:
+      - 9000:9000
+      - 9090:9090
+    environment:
+      MINIO_ROOT_USER: "root"
+      MINIO_ROOT_PASSWORD: "secret-key"
+      MINIO_DEFAULT_BUCKETS: "spartan-objects"
+    command: server --console-address ":9090" /data

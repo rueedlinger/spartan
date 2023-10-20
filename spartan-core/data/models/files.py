@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class FiletRead(BaseModel):
     id: str
+    correlation_id: Union[str, None] = None
     idea_id: str
     name: str
     attributes: Union[dict, None] = None
@@ -16,6 +17,7 @@ class FiletRead(BaseModel):
 
 
 class FileUpdate(BaseModel):
+    correlation_id: Union[str, None] = None
     idea_id: str
     name: str
     attributes: Union[dict, None] = None

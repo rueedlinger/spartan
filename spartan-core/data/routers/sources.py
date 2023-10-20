@@ -77,6 +77,7 @@ def delete_source(source_id: str, db=Depends(get_mongodb_session)):
 def get_sources(
         pagination: Annotated[PaginationParameter, Depends(pagination_params)],
         sorting: Annotated[SortingParameter, Depends(sorting_params)],
+        correlation_id: str | None = None,
         idea_id: str | None = None,
         name: str | None = None,
         url: str | None = None,
@@ -85,7 +86,7 @@ def get_sources(
         before_modified_ts: datetime | None = None,
         after_modified_ts: datetime | None = None,
         db=Depends(get_mongodb_session)) -> IdeaSourceList:
-    query = to_query(idea_id=idea_id, name=name, url=url,
+    query = to_query(correlation_id=correlation_id, idea_id=idea_id, name=name, url=url,
                      before_modified_ts=before_modified_ts, after_modified_ts=after_modified_ts,
                      before_created_ts=before_created_ts, after_created_ts=after_created_ts)
 

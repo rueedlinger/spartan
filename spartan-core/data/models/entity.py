@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class EntityRead(BaseModel):
     id: str
+    correlation_id: Union[str, None] = None
     idea_id: Union[str, None] = None
     file_id: Union[str, None] = None
     value: str
@@ -19,6 +20,7 @@ class EntityRead(BaseModel):
 
 
 class EntityUpdate(BaseModel):
+    correlation_id: Union[str, None] = None
     idea_id: Union[str, None] = None
     file_id: Union[str, None] = None
     value: str

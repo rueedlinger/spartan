@@ -36,6 +36,7 @@ router = APIRouter(
 def read_ideas(
         pagination: Annotated[PaginationParameter, Depends(pagination_params)],
         sorting: Annotated[SortingParameter, Depends(sorting_params)],
+        correlation_id: str | None = None,
         name: str | None = None,
         tags: List[str] = Query(None),
         project: str | None = None,
@@ -48,7 +49,7 @@ def read_ideas(
         after_modified_ts: datetime | None = None,
         db=Depends(get_mongodb_session)
 ) -> IdeaList:
-    query = to_query(name=name, tags=tags, project=project, area=area, resource=resource, archive=archive,
+    query = to_query(correlation_id=correlation_id, name=name, tags=tags, project=project, area=area, resource=resource, archive=archive,
                      before_modified_ts=before_modified_ts, after_modified_ts=after_modified_ts,
                      before_created_ts=before_created_ts, after_created_ts=after_created_ts)
 

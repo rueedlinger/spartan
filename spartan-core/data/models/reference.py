@@ -11,6 +11,7 @@ class ReferenceType(str, Enum):
 
 
 class ReferenceUpdate(BaseModel):
+    correlation_id: Union[str, None] = None
     source_idea_id: Union[str, None] = None
     target_idea_id: Union[str, None] = None
     type: ReferenceType
@@ -19,6 +20,7 @@ class ReferenceUpdate(BaseModel):
 
 class ReferenceRead(BaseModel):
     id: str
+    correlation_id: Union[str, None] = None
     source_idea_id: Union[str, None] = None
     target_idea_id: Union[str, None] = None
     type: ReferenceType

@@ -99,6 +99,7 @@ def delete_label(label_id: str, db=Depends(get_mongodb_session)):
 def get_labels(
         pagination: Annotated[PaginationParameter, Depends(pagination_params)],
         sorting: Annotated[SortingParameter, Depends(sorting_params)],
+        correlation_id: str | None = None,
         idea_id: str | None = None,
         file_id: str | None = None,
         value: str | None = None,
@@ -108,7 +109,7 @@ def get_labels(
         before_modified_ts: datetime | None = None,
         after_modified_ts: datetime | None = None,
         db=Depends(get_mongodb_session)) -> LabelList:
-    query = to_query(idea_id=idea_id, file_id=file_id, value=value, type=type,
+    query = to_query(correlation_id=correlation_id, idea_id=idea_id, file_id=file_id, value=value, type=type,
                      before_modified_ts=before_modified_ts, after_modified_ts=after_modified_ts,
                      before_created_ts=before_created_ts, after_created_ts=after_created_ts)
 

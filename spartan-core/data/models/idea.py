@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 
 class IdeaUpdate(BaseModel):
+    correlation_id: Union[str, None] = None
     name: str
     content: str
     tags: Union[set[str], None] = None
@@ -16,6 +17,7 @@ class IdeaUpdate(BaseModel):
 
 
 class IdeaPatch(BaseModel):
+    correlation_id: Union[str, None] = None
     name: Union[str, None] = None
     content: Union[str, None] = None
     tags: Union[set[str], None] = None
@@ -28,6 +30,7 @@ class IdeaPatch(BaseModel):
 
 class IdeaRead(BaseModel):
     id: str
+    correlation_id: Union[str, None] = None
     name: str
     content: str
     tags: Union[list[str], None] = None

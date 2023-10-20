@@ -100,6 +100,7 @@ def delete_reference(reference_id: str, db=Depends(get_mongodb_session)):
 def get_references(
         pagination: Annotated[PaginationParameter, Depends(pagination_params)],
         sorting: Annotated[SortingParameter, Depends(sorting_params)],
+        correlation_id: str | None = None,
         target_idea_id: str | None = None,
         source_idea_id: str | None = None,
         type: str | None = None,
@@ -109,7 +110,7 @@ def get_references(
         after_modified_ts: datetime | None = None,
         db=Depends(get_mongodb_session)) -> ReferenceList:
 
-    query = to_query(target_idea_id=target_idea_id, source_idea_id=source_idea_id, type=type,
+    query = to_query(correlation_id=correlation_id, target_idea_id=target_idea_id, source_idea_id=source_idea_id, type=type,
                      before_modified_ts=before_modified_ts, after_modified_ts=after_modified_ts,
                      before_created_ts=before_created_ts, after_created_ts=after_created_ts)
 

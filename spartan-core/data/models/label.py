@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 
 class LabelRead(BaseModel):
+    correlation_id: Union[str, None] = None
     id: str
     idea_id: Union[str, None] = None
     file_id: Union[str, None] = None
@@ -16,6 +17,7 @@ class LabelRead(BaseModel):
 
 
 class LabelUpdate(BaseModel):
+    correlation_id: Union[str, None] = None
     idea_id: Union[str, None] = None
     file_id: Union[str, None] = None
     value: str

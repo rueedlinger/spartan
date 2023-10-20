@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class IdeaSourceRead(BaseModel):
     id: str
+    correlation_id: Union[str, None] = None
     idea_id: str
     url: str
     name: Union[str, None] = None
@@ -15,6 +16,7 @@ class IdeaSourceRead(BaseModel):
 
 
 class IdeaSourceUpdate(BaseModel):
+    correlation_id: Union[str, None] = None
     idea_id: str
     url: str
     name: Union[str, None] = None
