@@ -2,6 +2,7 @@ import logging
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
+from fastapi.responses import ORJSONResponse
 
 from .dependencies import get_mongodb_session
 from .routers import ideas, references, tags, projects, areas, resouces, archives, entities, sources, labels, files
@@ -11,7 +12,7 @@ from .models.http import pagination_params, PaginationParameter, SortingParamete
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+app = FastAPI(default_response_class=ORJSONResponse)
 app.include_router(ideas.router)
 app.include_router(tags.router)
 app.include_router(projects.router)

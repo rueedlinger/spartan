@@ -1,12 +1,12 @@
 import logging
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Union
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, Form
 from fastapi.encoders import jsonable_encoder
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, FileResponse
 
 from ..models import convert
 from ..models.error import ErrorResponseMessage
@@ -26,6 +26,17 @@ router = APIRouter(
         404: {"model": ErrorResponseMessage, "description": "Not Found"}
     }
 )
+
+
+@router.post("/{file_id}/upload")
+def upload_file(file_id: str, file: UploadFile):
+    print(file.filename)
+    print(file.content_type)
+
+
+@router.get("/{file_id}/content")
+def get_file_content(file_id: str) -> FileResponse:
+    return FileResponse()
 
 
 @router.post("/")
