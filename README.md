@@ -20,6 +20,10 @@ urls:
 ### MongoDB
 ```bash
 export SPARTAN_MONGODB_URL="mongodb://root:example@localhost:27017/spartan?authSource=admin"
+export SPARTAN_S3_ENDPOINT="minio:9000"
+export SPARTAN_S3_ACCESS_KEY="root"
+export SPARTAN_S3_SECRET_KEY="secret-key"
+export SPARTAN_S3_SECURE="true"
 ```
 
 
