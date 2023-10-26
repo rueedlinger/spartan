@@ -9,20 +9,18 @@ class FiletRead(BaseModel):
     correlation_id: Union[str, None] = None
     idea_id: str
     name: str
+    content_type: str
+    size: int
     attributes: Union[dict, None] = None
-    hash: Union[str, None] = None
-    hash_type: Union[str, None] = None
+    hash: str
+    hash_type: str
     created_ts: datetime
     modified_ts: datetime
 
 
 class FileUpdate(BaseModel):
     correlation_id: Union[str, None] = None
-    idea_id: str
-    name: str
     attributes: Union[dict, None] = None
-    hash: Union[str, None] = None
-    hash_type: Union[str, None] = None
 
 
 class FileList(BaseModel):

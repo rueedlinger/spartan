@@ -1,10 +1,29 @@
-ENV_VERSION = "SPARTAN_VERSION"
-# "mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=true&w=majority
-ENV_MONGODB_URL = "SPARTAN_MONGODB_URL"
-ENV_S3_ENDPOINT = "SPARTAN_S3_ENDPOINT"
-ENV_S3_ACCESS_KEY = "SPARTAN_S3_ACCESS_KEY"
-ENV_S3_SECRET_KEY = "SPARTAN_S3_SECRET_KEY"
-ENV_S3_SECURE = "SPARTAN_S3_SECURE"
+import json
+import logging
+import os
 
-VALUE_DEFAULT_DB_NAME = 'spartan'
+from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
+
 VALUE_UNKNOWN = 'UNKNOWN'
+
+info_file = open(os.path.join(os.getcwd(), 'conf/app.json'))
+data = json.load(info_file)
+info_file.close()
+
+APP_NAME = data["app-name"]
+VERSION = data['app-version']
+VALUE_DEFAULT_DB_NAME = data['db-name']
+
+logger.info(f"app-name: {APP_NAME}")
+logger.info(f"ap-version: {VERSION}")
+logger.info(f"db-name: {VALUE_DEFAULT_DB_NAME}")
+
+
+class Settings(BaseSettings):
+    spartan_mongodb_url: str = "mongodb://root:example@localhost:27017/spartan?authSource=admin"
+    spartan_s3_endpoint: str = "localhost:9000"
+    spartan_s3_access_key: str = "root"
+    spartan_s3_secret_key: str = "secret-key"
+    spartan_s3_secure: bool = False

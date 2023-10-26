@@ -29,56 +29,57 @@ router = APIRouter(
 @router.post("/")
 def create_reference(reference: ReferenceUpdate, db=Depends(get_mongodb_session)) -> ReferenceRead:
     try:
-        ref_json = jsonable_encoder(reference)
-        ref_json['created_ts'] = datetime.now()
-        ref_json['modified_ts'] = datetime.now()
+        json = jsonable_encoder(reference)
+        now = datetime.now()
+        json['created_ts'] = now
+        json['modified_ts'] = now
 
         if reference.target_idea_id is None and reference.source_idea_id is None:
-            json = jsonable_encoder(
+            resp = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
                     message=f"Missing ID",
                     detail=f"Provide 'target_idea_id' or 'source_idea_id'"
                 )
             )
-            return JSONResponse(content=json, status_code=400)
+            return JSONResponse(content=resp, status_code=400)
 
         if reference.target_idea_id is not None:
             if db['ideas'].find_one({'_id': ObjectId(reference.target_idea_id)}) is None:
-                json = jsonable_encoder(
+                resp = jsonable_encoder(
                     ErrorResponseMessage(
                         error="ID_ERROR",
                         message=f"ID does not exist",
                         detail=f"target_idea_id '{reference.target_idea_id}' does not exist"
                     )
                 )
-                return JSONResponse(content=json, status_code=404)
-            ref_json['target_idea_id'] = ObjectId(reference.target_idea_id)
+                return JSONResponse(content=resp, status_code=404)
+            json['target_idea_id'] = ObjectId(reference.target_idea_id)
 
         if reference.source_idea_id is not None:
             if db['ideas'].find_one({'_id': ObjectId(reference.source_idea_id)}) is None:
-                json = jsonable_encoder(
+                resp = jsonable_encoder(
                     ErrorResponseMessage(
                         error="ID_ERROR",
                         message=f"ID does not exist",
                         detail=f"source_idea_id '{reference.source_idea_id}' does not exist"
                     )
                 )
-                return JSONResponse(content=json, status_code=404)
-            ref_json['source_idea_id'] = ObjectId(reference.source_idea_id)
+                return JSONResponse(content=resp, status_code=404)
+            json['source_idea_id'] = ObjectId(reference.source_idea_id)
 
-        new_idea = db['references'].insert_one(ref_json)
-        data = convert(db['references'].find_one({'_id': new_idea.inserted_id}))
+        new = db['references'].insert_one(json)
+        data = convert(db['references'].find_one({'_id': new.inserted_id}))
         return ReferenceRead(**data)
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.delete("/{reference_id}")
@@ -86,14 +87,14 @@ def delete_reference(reference_id: str, db=Depends(get_mongodb_session)):
     try:
         db['references'].delete_one({'_id': ObjectId(reference_id)})
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.get("/")
@@ -120,9 +121,9 @@ def get_references(
             pagination.offset * pagination.limit)
     else:
         found = db['references'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
-    ideas = []
+    data = []
     for f in found:
-        ideas.append(ReferenceRead(**convert(f)))
-    return ReferenceList(data=ideas, query=convert(query),
-                         pagination=pagination.to_dict({'count': len(ideas)}),
+        data.append(ReferenceRead(**convert(f)))
+    return ReferenceList(data=data, query=convert(query),
+                         pagination=pagination.to_dict({'count': len(data)}),
                          sorting=sorting.to_dict())

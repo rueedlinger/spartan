@@ -29,55 +29,56 @@ router = APIRouter(
 @router.post("/")
 def create_label(label: LabelUpdate, db=Depends(get_mongodb_session)) -> LabelUpdate:
     try:
-        ref_json = jsonable_encoder(label)
-        ref_json['created_ts'] = datetime.now()
-        ref_json['modified_ts'] = datetime.now()
+        json = jsonable_encoder(label)
+        now = datetime.now()
+        json['created_ts'] = now
+        json['modified_ts'] = now
 
         if label.idea_id is None and label.file_id is None:
-            json = jsonable_encoder(
+            resp = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
                     message=f"Missing ID",
                     detail=f"Provide 'idea_id' or 'file_id'"
                 )
             )
-            return JSONResponse(content=json, status_code=400)
+            return JSONResponse(content=resp, status_code=400)
 
         if label.idea_id is not None:
             if db['ideas'].find_one({'_id': ObjectId(label.idea_id)}) is None:
-                json = jsonable_encoder(
+                resp = jsonable_encoder(
                     ErrorResponseMessage(
                         error="ID_ERROR",
                         message=f"ID does not exist",
                         detail=f"idea_id '{label.idea_id}' does not exist"
                     )
                 )
-                return JSONResponse(content=json, status_code=404)
-            ref_json['idea_id'] = ObjectId(label.idea_id)
+                return JSONResponse(content=resp, status_code=404)
+            json['idea_id'] = ObjectId(label.idea_id)
         if label.file_id is not None:
             if db['files'].find_one({'_id': ObjectId(label.file_id)}) is None:
-                json = jsonable_encoder(
+                resp = jsonable_encoder(
                     ErrorResponseMessage(
                         error="ID_ERROR",
                         message=f"ID does not exist",
                         detail=f"file_id '{label.file_id}' does not exist"
                     )
                 )
-                return JSONResponse(content=json, status_code=404)
-            ref_json['file_id'] = ObjectId(label.file_id)
+                return JSONResponse(content=resp, status_code=404)
+            json['file_id'] = ObjectId(label.file_id)
 
-        new_idea = db['labels'].insert_one(ref_json)
-        data = convert(db['labels'].find_one({'_id': new_idea.inserted_id}))
+        new = db['labels'].insert_one(json)
+        data = convert(db['labels'].find_one({'_id': new.inserted_id}))
         return LabelUpdate(**data)
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.delete("/{label_id}")
@@ -85,14 +86,14 @@ def delete_label(label_id: str, db=Depends(get_mongodb_session)):
     try:
         db['labels'].delete_one({'_id': ObjectId(label_id)})
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.get("/")
@@ -119,9 +120,9 @@ def get_labels(
             pagination.offset * pagination.limit)
     else:
         found = db['labels'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
-    ideas = []
+    data = []
     for f in found:
-        ideas.append(LabelRead(**convert(f)))
-    return LabelList(data=ideas, query=convert(query),
-                     pagination=pagination.to_dict({'count': len(ideas)}),
+        data.append(LabelRead(**convert(f)))
+    return LabelList(data=data, query=convert(query),
+                     pagination=pagination.to_dict({'count': len(data)}),
                      sorting=sorting.to_dict())

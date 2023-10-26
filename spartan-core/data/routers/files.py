@@ -1,10 +1,11 @@
+import hashlib
 import logging
 from datetime import datetime
-from typing import Annotated, Union
+from typing import Annotated, Union, Optional
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, Depends, UploadFile, Form
+from fastapi import APIRouter, Depends, UploadFile, Form, File
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import JSONResponse, FileResponse
 
@@ -28,16 +29,48 @@ router = APIRouter(
 )
 
 
-@router.post("/{file_id}/upload")
-def upload_file(file_id: str, file: UploadFile):
-    print(file.filename)
-    print(file.content_type)
+@router.post("/")
+def create_file(file: UploadFile,
+                idea_id: Annotated[str, Form()],
+                correlation_id: Union[str, None] = Form(default=None),
+                db=Depends(get_mongodb_session)) -> FiletRead:
+    try:
+        idea_id = ObjectId(idea_id)
+        if db['ideas'].find_one({'_id': idea_id}) is None:
+            resp = jsonable_encoder(
+                ErrorResponseMessage(
+                    error="ID_ERROR",
+                    message=f"ID does not exist",
+                    detail=f"idea_id '{idea_id}' does not exist"
+                )
+            )
+            return JSONResponse(content=resp, status_code=404)
+
+        contents = file.file.read()
+        file_hash = hashlib.sha256(contents).hexdigest()
+        now = datetime.now()
+
+        json = {'idea_id': idea_id, 'name': file.filename, 'content_type': file.content_type,
+                'size': len(contents), 'hash': file_hash, 'hash_type': 'sha256', 'created_ts': now, 'modified_ts': now}
+
+        if correlation_id is not None:
+            json['correlation_id'] = correlation_id
+
+        new = db['files'].insert_one(json)
+        data = convert(db['files'].find_one({'_id': new.inserted_id}))
+        return FiletRead(**convert(data))
+    except InvalidId as ex:
+        resp = jsonable_encoder(
+            ErrorResponseMessage(
+                error="ID_ERROR",
+                message=f"ID has not a valid format",
+                detail=str(ex)
+            )
+        )
+        return JSONResponse(content=resp, status_code=400)
 
 
-@router.get("/{file_id}/content")
-def get_file_content(file_id: str) -> FileResponse:
-    return FileResponse()
-
+"""
 
 @router.post("/")
 def create_file(file: FileUpdate, db=Depends(get_mongodb_session)) -> FiletRead:
@@ -162,3 +195,4 @@ def get_labels_from_file(file_id: str,
             )
         )
         return JSONResponse(content=json, status_code=400)
+"""

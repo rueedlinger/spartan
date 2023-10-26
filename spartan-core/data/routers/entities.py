@@ -29,45 +29,46 @@ router = APIRouter(
 @router.post("/")
 def create_entities(entity: EntityUpdate, db=Depends(get_mongodb_session)) -> EntityRead:
     try:
-        ref_json = jsonable_encoder(entity)
-        ref_json['created_ts'] = datetime.now()
-        ref_json['modified_ts'] = datetime.now()
+        json = jsonable_encoder(entity)
+        now = datetime.now()
+        json['created_ts'] = now
+        json['modified_ts'] = now
 
         if entity.idea_id is None and entity.file_id is None:
-            json = jsonable_encoder(
+            resp = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
                     message=f"Missing ID",
                     detail=f"Provide 'idea_id' or 'file_id'"
                 )
             )
-            return JSONResponse(content=json, status_code=400)
+            return JSONResponse(content=resp, status_code=400)
 
         if entity.idea_id is not None:
-            ref_json['idea_id'] = ObjectId(entity.idea_id)
+            json['idea_id'] = ObjectId(entity.idea_id)
             if db['ideas'].find_one({'_id': ObjectId(entity.idea_id)}) is None:
-                json = jsonable_encoder(
+                resp = jsonable_encoder(
                     ErrorResponseMessage(
                         error="ID_ERROR",
                         message=f"ID does not exist",
                         detail=f"idea_id '{entity.idea_id}' does not exist"
                     )
                 )
-                return JSONResponse(content=json, status_code=404)
+                return JSONResponse(content=resp, status_code=404)
 
         if entity.file_id is not None:
-            ref_json['file_id'] = ObjectId(entity.file_id)
+            json['file_id'] = ObjectId(entity.file_id)
             if db['files'].find_one({'_id': ObjectId(entity.file_id)}) is None:
-                json = jsonable_encoder(
+                resp = jsonable_encoder(
                     ErrorResponseMessage(
                         error="ID_ERROR",
                         message=f"ID does not exist",
                         detail=f"file_id '{entity.file_id}' does not exist"
                     )
                 )
-                return JSONResponse(content=json, status_code=404)
+                return JSONResponse(content=resp, status_code=404)
 
-        new = db['entities'].insert_one(ref_json)
+        new = db['entities'].insert_one(json)
         data = convert(db['entities'].find_one({'_id': new.inserted_id}))
         return EntityRead(**data)
     except InvalidId as ex:
@@ -86,14 +87,14 @@ def delete_entity(entity_id: str, db=Depends(get_mongodb_session)):
     try:
         db['entities'].delete_one({'_id': ObjectId(entity_id)})
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.get("/")
@@ -121,9 +122,9 @@ def get_entities(
             pagination.offset * pagination.limit)
     else:
         found = db['entities'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
-    ideas = []
+    data = []
     for f in found:
-        ideas.append(EntityRead(**convert(f)))
-    return EntityList(data=ideas, query=convert(query),
-                      pagination=pagination.to_dict({'count': len(ideas)}),
+        data.append(EntityRead(**convert(f)))
+    return EntityList(data=data, query=convert(query),
+                      pagination=pagination.to_dict({'count': len(data)}),
                       sorting=sorting.to_dict())

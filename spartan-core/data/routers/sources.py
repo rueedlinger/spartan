@@ -29,33 +29,34 @@ router = APIRouter(
 @router.post("/")
 def create_source(source: IdeaSourceUpdate, db=Depends(get_mongodb_session)) -> IdeaSourceRead:
     try:
-        ref_json = jsonable_encoder(source)
-        ref_json['idea_id'] = ObjectId(source.idea_id)
-        ref_json['created_ts'] = datetime.now()
-        ref_json['modified_ts'] = datetime.now()
+        json = jsonable_encoder(source)
+        json['idea_id'] = ObjectId(source.idea_id)
+        now = datetime.now()
+        json['created_ts'] = now
+        json['modified_ts'] = now
 
         if db['ideas'].find_one({'_id': ObjectId(source.idea_id)}) is None:
-            json = jsonable_encoder(
+            resp = jsonable_encoder(
                 ErrorResponseMessage(
                     error="ID_ERROR",
                     message=f"ID does not exist",
                     detail=f"idea_id '{source.idea_id}' does not exist"
                 )
             )
-            return JSONResponse(content=json, status_code=404)
+            return JSONResponse(content=resp, status_code=404)
 
-        new_idea = db['sources'].insert_one(ref_json)
-        data = convert(db['sources'].find_one({'_id': new_idea.inserted_id}))
+        new = db['sources'].insert_one(json)
+        data = convert(db['sources'].find_one({'_id': new.inserted_id}))
         return IdeaSourceRead(**data)
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.delete("/{source_id}")
@@ -63,14 +64,14 @@ def delete_source(source_id: str, db=Depends(get_mongodb_session)):
     try:
         db['sources'].delete_one({'_id': ObjectId(source_id)})
     except InvalidId as ex:
-        json = jsonable_encoder(
+        resp = jsonable_encoder(
             ErrorResponseMessage(
                 error="ID_ERROR",
                 message=f"ID has not a valid format",
                 detail=str(ex)
             )
         )
-        return JSONResponse(content=json, status_code=400)
+        return JSONResponse(content=resp, status_code=400)
 
 
 @router.get("/")
@@ -96,9 +97,9 @@ def get_sources(
             pagination.offset * pagination.limit)
     else:
         found = db['sources'].find(query).limit(pagination.limit).skip(pagination.offset * pagination.limit)
-    ideas = []
+    data = []
     for f in found:
-        ideas.append(IdeaSourceRead(**convert(f)))
-    return IdeaSourceList(data=ideas, query=convert(query),
-                          pagination=pagination.to_dict({'count': len(ideas)}),
+        data.append(IdeaSourceRead(**convert(f)))
+    return IdeaSourceList(data=data, query=convert(query),
+                          pagination=pagination.to_dict({'count': len(data)}),
                           sorting=sorting.to_dict())
