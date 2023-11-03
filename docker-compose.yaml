@@ -18,17 +18,17 @@ services:
         - ./init/mongo_setup.sh:/docker-entrypoint-initdb.d/mongo_setup.sh:ro
 
 
-  mongo-express:
-    image: mongo-express:1.0.0-18
-    restart: always
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin
-      ME_CONFIG_MONGODB_ENABLE_ADMIN: true
-      ME_CONFIG_BASICAUTH: true
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+ # mongo-express:
+ #   image: mongo-express:1.0.0-18
+ #   restart: always
+ #   ports:
+ #     - 8081:8081
+ #   environment:
+ #     ME_CONFIG_BASICAUTH_USERNAME: admin
+ #     ME_CONFIG_BASICAUTH_PASSWORD: admin
+ #     ME_CONFIG_MONGODB_ENABLE_ADMIN: true
+ #     ME_CONFIG_BASICAUTH: true
+ #     ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
 
   minio:
     image: quay.io/minio/minio:RELEASE.2023-10-14T05-17-22Z

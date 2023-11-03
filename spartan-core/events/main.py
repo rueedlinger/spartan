@@ -43,13 +43,13 @@ if __name__ == '__main__':
 
     with db.watch(resume_after=resume_token) as stream:
         for change in stream:
-            logger.debug(f"got change evnet from mongodb {change}")
+            #logger.debug(f"got change evnet from mongodb {change}")
 
             if 'operationType' not in change:
                 continue
 
             opType = change['operationType']
-            if str(opType).lower() in ['insert', 'update', 'delete'] and change['ns']['coll'] is not "outbox":
+            if str(opType).lower() in ['insert', 'update', 'delete'] and change['ns']['coll'] != "outbox":
                 doc_id = change['documentKey']['_id']
                 collection = change['ns']['coll']
                 timestamp = change['wallTime']
