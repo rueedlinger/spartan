@@ -4,11 +4,11 @@ import os
 
 from pydantic_settings import BaseSettings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("spartan."+__name__)
 
 VALUE_UNKNOWN = 'UNKNOWN'
 
-info_file = open(os.path.join(os.getcwd(), 'conf/app.json'))
+info_file = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'app.json'))
 data = json.load(info_file)
 info_file.close()
 

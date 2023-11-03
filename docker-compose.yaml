@@ -1,12 +1,22 @@
 services:
   mongo:
-      image: mongo:7.0.2
+      #image: mongo:7.0.2
+      build:
+        dockerfile: Dockerfile.mongo
       restart: always
       environment:
         MONGO_INITDB_ROOT_USERNAME: root
         MONGO_INITDB_ROOT_PASSWORD: example
+        MONGO_REPLICA_SET_NAME: "spartan-change-streams"
+        MONGODB_DB: spartan
+        MONGODB_USER: spartan
+        MONGODB_PASSWORD: abc123
+      command: ["--replSet", "spartan-change-streams", "--bind_ip_all",  "--keyFile", "/data/replica.key"]
       ports:
         - 27017:27017
+      volumes:
+        - ./init/mongo_setup.sh:/docker-entrypoint-initdb.d/mongo_setup.sh:ro
+
 
   mongo-express:
     image: mongo-express:1.0.0-18
@@ -14,10 +24,10 @@ services:
     ports:
       - 8081:8081
     environment:
-      #ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      #ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
       ME_CONFIG_MONGODB_ENABLE_ADMIN: true
-      ME_CONFIG_BASICAUTH: false
+      ME_CONFIG_BASICAUTH: true
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
 
   minio:

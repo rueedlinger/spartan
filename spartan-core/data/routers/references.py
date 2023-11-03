@@ -6,7 +6,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
-from starlette.responses import JSONResponse
+from fastapi.responses import JSONResponse
 
 from ..models import convert
 from ..models.error import ErrorResponseMessage

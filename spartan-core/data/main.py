@@ -10,7 +10,7 @@ from .models import convert
 from .models.idea import IdeaList, IdeaRead
 from .models.http import pagination_params, PaginationParameter, SortingParameter, sorting_params
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("spartan."+__name__)
 
 app = FastAPI(default_response_class=ORJSONResponse)
 app.include_router(ideas.router)

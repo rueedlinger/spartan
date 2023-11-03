@@ -7,7 +7,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, Depends, Query
 from fastapi.encoders import jsonable_encoder
-from starlette.responses import JSONResponse
+from fastapi.responses import JSONResponse
 
 from ..models import convert
 from ..models.error import ErrorResponseMessage
@@ -96,7 +96,10 @@ def read_idea(idea_id: str, db=Depends(get_mongodb_session)) -> IdeaRead:
 @router.delete("/{idea_id}")
 def delete_idea(idea_id: str, db=Depends(get_mongodb_session)):
     try:
-        db['ideas'].delete_one({'_id': ObjectId(idea_id)})
+        r = db['ideas'].delete_one({'_id': ObjectId(idea_id)})
+        if r.deleted_count != 0:
+            pass
+
     except InvalidId as ex:
         resp = jsonable_encoder(
             ErrorResponseMessage(

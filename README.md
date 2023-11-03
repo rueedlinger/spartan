@@ -26,6 +26,22 @@ export SPARTAN_S3_SECRET_KEY="secret-key"
 export SPARTAN_S3_SECURE="true"
 ```
 
+Setup replica set
+
+```
+mongosh mongodb://localhost:27017/ -u root -p example
+```
+
+```
+rs.initiate({
+    _id: 'spartan-change-streams',
+    members: [{ _id : 0, host : '127.0.0.1:27017'}]
+});
+
+rs.status();
+```
+
+
 
 ## Data (spartan-core)
 ```bash
@@ -41,3 +57,8 @@ tbd
 
 ## Connectors
 tbd
+
+
+
+
+

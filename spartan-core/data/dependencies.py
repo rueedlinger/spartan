@@ -1,11 +1,10 @@
 import logging
-import os
 
 from minio import Minio
 from pymongo import MongoClient
-from .config import Settings, VALUE_DEFAULT_DB_NAME
+from .config.app_settings import Settings, VALUE_DEFAULT_DB_NAME
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("spartan." + __name__)
 
 settings = Settings()
 
@@ -27,7 +26,6 @@ logger.info(f"checking s3 bucket...")
 found = s3_session.bucket_exists(VALUE_DEFAULT_DB_NAME)
 if not found:
     s3_session.make_bucket(VALUE_DEFAULT_DB_NAME)
-
 
 
 def get_mongodb_session():
