@@ -9,6 +9,7 @@ def datetime_from_utc_to_local(utc_datetime):
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
     return utc_datetime + offset
 
+
 def convert(doc: dict) -> dict:
     data = {}
     for k, v in doc.items():

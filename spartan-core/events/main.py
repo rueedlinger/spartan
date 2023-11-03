@@ -53,10 +53,21 @@ if __name__ == '__main__':
                 doc_id = change['documentKey']['_id']
                 collection = change['ns']['coll']
                 timestamp = change['wallTime']
+
+                data = None
+                if 'updateDescription' in change and 'updatedFields' in change['updateDescription']:
+                    data = change['updateDescription']['updatedFields']
+                elif 'fullDocument' in change:
+                    data = change['fullDocument']
+
+                if data is not None and '_id' in data:
+                    del data['_id']
+
                 msg = {
                     'id': doc_id, 'context': collection,
                     'type': str(opType).upper(),
-                    'created_ts': datetime_from_utc_to_local(timestamp)
+                    'created_ts': datetime_from_utc_to_local(timestamp),
+                    'data': data
                 }
                 event = ChangeEvent(**convert(msg))
                 logger.debug(f"sending evnet {event}")

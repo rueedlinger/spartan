@@ -9,4 +9,4 @@ class ChangeEvent(BaseModel):
     context: Union[str, None] = None
     type: Union[str, None] = None
     created_ts: Union[datetime, None] = None
-    #data: Union[dict, None] = None
+    data: Union[dict, None] = None
