@@ -109,7 +109,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logger.info("got keyboard interrupt")
     except Exception as e:
-        logger.error("got error"), e
+        logger.error("got error", e)
     finally:
         logger.info("shutting down")
 
