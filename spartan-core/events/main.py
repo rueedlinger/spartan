@@ -4,9 +4,11 @@ import os
 from datetime import datetime, timedelta
 from json import dumps
 from typing import Any, Mapping
+import socket
 
 import yaml
 from bson import ObjectId, Timestamp
+from confluent_kafka import Producer, cimpl
 from pymongo import MongoClient
 
 from config.app_settings import Settings, VALUE_DEFAULT_DB_NAME
@@ -25,6 +27,13 @@ logger = logging.getLogger("spartan.events")
 settings = Settings()
 
 
+def kafka_publisher_callback(err, msg: cimpl.Message):
+    if err is not None:
+        raise Exception(f"Message delivery failed: {err}")
+    else:
+        logger.info(f"message published key={msg.key()}, topic={msg.topic()}, offset={msg.offset()}")
+
+
 def get_stream(db, last_resume_token=None):
     logger.debug("try to get stream")
     if last_resume_token is None:
@@ -36,7 +45,7 @@ def get_stream(db, last_resume_token=None):
         return db.watch(resume_after=last_resume_token)
 
 
-def process_change_events(db):
+def process_change_events(db, producer):
     found = db['outbox'].find_one({'_id': 'resume_token'})
 
     if found is None:
@@ -48,8 +57,11 @@ def process_change_events(db):
         for change in stream:
             event = create_event(change)
             if event is not None:
-                # TODO: send event
-                logger.info(f"publishing event {event.type}, context={event.context}, id={event.id}")
+                producer.produce(topic="spartan.events." + event.context,
+                                 value=event.model_dump_json(),
+                                 key=event.id,
+                                 callback=kafka_publisher_callback)
+                producer.flush()
                 resume_token = stream.resume_token
                 store_token(resume_token, db)
 
@@ -91,7 +103,7 @@ def create_event(change_event):
             'data': data
         }
         event = ChangeEvent(**convert(msg))
-        logger.debug(f"{event}")
+        logger.debug(f"creating change evnet {event}")
         return event
     else:
         return None
@@ -104,12 +116,16 @@ if __name__ == '__main__':
     mongodb_client.admin.command('ping')
     logger.info(f"checking mongodb db...")
     db = mongodb_client.get_default_database(VALUE_DEFAULT_DB_NAME)
+
+    conf = {'bootstrap.servers': 'localhost:9092',
+            'client.id': socket.gethostname()}
+    producer = Producer(conf)
+
     try:
-        process_change_events(db)
+        process_change_events(db, producer)
     except KeyboardInterrupt as k:
         logger.info("got keyboard interrupt")
     except Exception as e:
         logger.exception(e)
     finally:
         logger.info("shutting down")
-

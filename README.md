@@ -14,7 +14,7 @@ docker compose up
 ```
 
 urls:
-- mongo-express: http://localhost:8081
+- kafka ui: http://localhost:8081
 - minio: http://localhost:9090/
 
 ### MongoDB
