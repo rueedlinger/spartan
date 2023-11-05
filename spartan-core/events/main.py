@@ -106,10 +106,10 @@ if __name__ == '__main__':
     db = mongodb_client.get_default_database(VALUE_DEFAULT_DB_NAME)
     try:
         process_change_events(db)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as k:
         logger.info("got keyboard interrupt")
     except Exception as e:
-        logger.error("got error", e)
+        logger.exception(e)
     finally:
         logger.info("shutting down")
 
